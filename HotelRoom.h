@@ -5,6 +5,15 @@
 #include <iostream>
 #include <string>
 
+/*
+* The Curiously Recurring Template Pattern is used here to create multiple abstract 
+* HotelRoom classes that can then self register during static member initialization
+* phase of program startup. This enables two things:
+*  1) the HotelReservationSystem class to remain mostly generic
+*  2) easy addition of more HotelRoom types by simply adding new hotel rooms that
+*     that inherit from the HotelRoom class template
+*/
+
 template <class RoomType>
 class HotelRoom
 {

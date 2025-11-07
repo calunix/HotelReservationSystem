@@ -13,6 +13,7 @@
 #include <filesystem>
 #include <format>
 #include <memory>
+#include <random>
 
 #include "Windows.h"
 
@@ -22,13 +23,22 @@ using namespace std::chrono;
 
 HotelReservationSystem::HotelReservationSystem()
 {
+	int firstRoomNum{ };
+	int numRooms{ };
 	for (const auto& rt : *ROOM_TYPES) {
+		// start with no reservations
 		_numReserved[rt.first] = 0;
+		// start with all rooms available
+		_availableRooms[rt.first] = { };
+		firstRoomNum = rt.second.at("FirstRoomNum");
+		numRooms = rt.second.at("NumRooms");
+		for (int i{ firstRoomNum }; i < firstRoomNum + numRooms; ++i) {
+			_availableRooms[rt.first].insert(i);
+		}
 	}
 	time_point now{ system_clock::now() };
 	sys_days currDays = floor<days>(now);
 	_dateToday = currDays;
-	_dateLoaded = currDays;
 }
 
 void HotelReservationSystem::ChangeDateLoaded(void)
@@ -51,9 +61,6 @@ void HotelReservationSystem::Start(void)
 		create_directory(reservationsDir);
 	}
 
-	ReadReservationFile();
-	UpdateNumReserved();
-
 	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	DWORD mode = 0;
 	GetConsoleMode(hStdOut, &mode);
@@ -64,7 +71,7 @@ void HotelReservationSystem::Start(void)
 	cout.imbue(current_locale);
 
 	DisplayStartScreen();
-}
+} 
 
 void HotelReservationSystem::DisplayStartScreen(void)
 {
@@ -95,6 +102,39 @@ void HotelReservationSystem::DisplayStartScreen(void)
 
 	LoadingIndicator(2);
 	ShowConsoleCursor();
+	cout << "\n\n";
+
+	year_month_day _dateInput{ UserInputDate() };
+	_dateLoaded = _dateInput;
+	string reservationFilename{ ".\\" + _reservationsDirName +
+		"\\" + format("{:%Y-%m-%d}", _dateInput) + ".csv" };
+
+	if (exists(reservationFilename)) {
+		cout << "Reservations for "
+			<< format("{:%m/%d/%Y}", _dateInput)
+			<< " found\n";
+		cout << "Would you like to load them? (y/n): ";
+		string loadConfirmation{ };
+		while (getline(cin, loadConfirmation)) {
+			loadConfirmation = ToLower(loadConfirmation);
+			if (loadConfirmation == "y" || loadConfirmation == "yes") {
+				
+				ReadReservationFile(reservationFilename);
+				UpdateNumReserved();
+				break;
+			}
+			else if (loadConfirmation == "n" || loadConfirmation == "no") {
+				return;
+			}
+			else {
+				DeleteLines(3);
+				cout << "Reservations for "
+					<< format("{:%m/%d/%Y}", _dateInput)
+					<< " found\n";
+				cout << "Would you like to load them? (y/n): ";
+			}
+		}
+	}	
 	MainMenu();
 }
 
@@ -125,7 +165,7 @@ void HotelReservationSystem::MainMenu(void)
 			DisplayRevenue();
 		}
 		else if (userInput == "4") {
-			//DisplayDetailedReport();
+			DisplayDetailedReport();
 		}
 		else {
 			cout << "Invalid selection";
@@ -267,8 +307,8 @@ void HotelReservationSystem::DisplayCommandOptions(void)
 		"1 - Create Reservation",
 		"2 - Change Date Loaded",
 		"3 - Compute Revenue for Date Loaded",
-		"4 - Detailed Reservations Report",
-		"Q - quit" };
+		"4 - Detailed Reservations Report by Date",
+		"Q - Quit" };
 	PrintCenteredOnLongest(options, sizeof(options) / sizeof(string));
 	cout << "\n";
 	PrintSeparator();
@@ -292,7 +332,9 @@ void HotelReservationSystem::CreateReservationMenu(void)
 		++i;
 	}
 
-	// get guest name input from user
+	string guestName{ };
+	cout << "Enter guest name: ";
+	getline(cin, guestName);
 
 	DisplayReservationOptions(&options);
 	string roomType{ UserSelectRoomType(&options) };
@@ -303,7 +345,9 @@ void HotelReservationSystem::CreateReservationMenu(void)
 			_numReserved[roomType] += 1;
 			selectionValid = !selectionValid;
 		}
-		else if (_numReserved.at(roomType) >= ROOM_TYPES->at(roomType).at("NumRooms")) {
+		else if (_numReserved.at(roomType) >=
+			ROOM_TYPES->at(roomType).at("NumRooms"))
+		{
 			cout << "No " << roomType << " Available";
 			this_thread::sleep_for(chrono::seconds(2));
 			DeleteLines(3);
@@ -311,15 +355,22 @@ void HotelReservationSystem::CreateReservationMenu(void)
 		}
 	}
 
-	// display available room numbers, ask for a choice
-	// could I accept any, then tie that to a randomize function that picks
-	// any index in a vector of available room numbers
+	// pick a random room number
+	vector<int> roomNums{ _availableRooms.at(roomType).begin(),
+		_availableRooms.at(roomType).end() };
+	random_device rdev{ };
+	mt19937 generator{ rdev() };
+	uniform_int_distribution<> roomDistribution{ 0, (int)roomNums.size() - 1};
+	int roomNum{ roomNums.at(roomDistribution(generator)) };
+	_availableRooms[roomType].erase(roomNum);
 
-	// put together a unique pointer to Reservation
-
-	// insert that reservation to reservations
+	_reservations.push_back(make_unique<Reservation>
+		(roomNum, ROOM_TYPES->at(roomType).at("Rate"), guestName, roomType));
 
 	// separately write the reservation to file
+	// all reservations must be immediately committed to file
+	WriteReservationFile(".\\" + _reservationsDirName +
+		"\\" + format("{:%Y-%m-%d}", _dateToday) + ".csv");
 
 	cout << "Reservation created\n";
 	this_thread::sleep_for(seconds(4));
@@ -343,7 +394,7 @@ void HotelReservationSystem::DisplayRevenue(void)
 // Returns a std::chrono::year_month_day object. Validates the date provided 
 // by the user before returning. While loop taking user input does not break 
 // until a valid date is provided.
-chrono::year_month_day HotelReservationSystem::UserInputDate(void)
+year_month_day HotelReservationSystem::UserInputDate(void)
 {
 	string userInput{ };
 	string datePrompt{ "Enter date as MM/DD/YYYY: " };
@@ -442,19 +493,18 @@ void HotelReservationSystem::DeleteLines(int numToDelete)
 	}
 }
 
-void HotelReservationSystem::ReadReservationFile(void)
+void HotelReservationSystem::ReadReservationFile(string filename)
 {
-	string reservationFilename{ ".\\" + _reservationsDirName +
-		"\\" + format("{:%Y-%m-%d}", _dateLoaded) + ".csv"};
-	std::ifstream reservationFile(reservationFilename);
+	ifstream reservationFile(filename);
+	if (!reservationFile.is_open()) {
+		// throw exception here instead
+		cout << filename << "\n";
+		cout << "File not opened\n";
+		return;
+	}
 
 	vector<string> lines{ };
 	string line{ };
-	if (!reservationFile.is_open()) {
-		cout << reservationFilename << "\n";
-		cout << "File not opened\n";
-		return;
-	}	
 	while (getline(reservationFile, line)) {
 		lines.push_back(line);
 	}
@@ -469,6 +519,7 @@ void HotelReservationSystem::ReadReservationFile(void)
 	unique_ptr<Reservation> reservation{ };
 	vector<string> tokens{ };
 	_reservations.clear();
+
 	for (const string line : lines) {
 		SplitString(line, delimiter, tokens);
 		roomNumber = stoi(tokens.at(0));
@@ -482,16 +533,23 @@ void HotelReservationSystem::ReadReservationFile(void)
 	}
 }
 
-//int roomNumber;
-//int rate;
-//std::string name;
-//std::string roomType;
-
-void HotelReservationSystem::WriteReservationFile(void)
+// Writes the reservations stored in HotelReservationSystem::_reservations to a
+// file named using the input string. For simplicity, existing file contents
+// are always discarded completely.
+void HotelReservationSystem::WriteReservationFile(string filename)
 {
-	// if the file doesn't exist, make it
-
-	// append the reservation to the file
+	ofstream reservationFile{ filename, ios::trunc };
+	if (!reservationFile.is_open()) {
+		// throw exception here
+		cout << filename << " not opened for writing\n";
+	}
+	reservationFile << "Room Number, Rate, Name, Room Type\n";
+	for (const auto& res : _reservations) {
+		reservationFile << res->roomNumber << ","
+			<< res->rate << ","
+			<< res->name << ","
+			<< res->roomType << "\n";
+	}
 }
 
 void HotelReservationSystem::UpdateNumReserved(void)
@@ -502,4 +560,14 @@ void HotelReservationSystem::UpdateNumReserved(void)
 	for (int i{ }; i < _reservations.size(); ++i) {
 		_numReserved[_reservations.at(i)->roomType] += 1;
 	}
+}
+
+void HotelReservationSystem::DisplayDetailedReport(void)
+{
+	// get a date from the user
+	// check if a file exists for that date
+	// if one does, load all the data to a variable that is local to this function
+	// display all the data from the file
+
+	return;
 }
