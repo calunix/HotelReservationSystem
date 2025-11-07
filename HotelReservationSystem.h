@@ -72,6 +72,11 @@ private:
 	void UpdateNumReserved(void);
 	void DisplayDetailedReport(void);
 
+	/*
+	* Menus and navigation
+	*/
+	void MainMenuOrQuit(std::string);
+
 
 	/*
 	* File read/write
