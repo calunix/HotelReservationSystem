@@ -8,6 +8,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <set>
 
 #include "Windows.h"
 
@@ -35,6 +36,7 @@ private:
 
 	std::vector<std::unique_ptr<Reservation>> _reservations{ };
 	std::unordered_map<std::string, int> _numReserved{ };
+	std::unordered_map<std::string, std::set<int>> _availableRooms{ };
 
 	std::chrono::year_month_day _dateToday{ };
 	std::chrono::year_month_day _dateLoaded{ };
@@ -66,8 +68,14 @@ private:
 	void DisplayReservationOptions(std::map<std::string, std::string>*);
 	std::string UserSelectRoomType(std::map<std::string, std::string>*);
 	void DisplayDatePane(void);
-	void ReadReservationFile(void);
-	void WriteReservationFile(void);
-	void UpdateNumReserved(void);
 	
+	void UpdateNumReserved(void);
+	void DisplayDetailedReport(void);
+
+
+	/*
+	* File read/write
+	*/
+	void ReadReservationFile(std::string);
+	void WriteReservationFile(std::string);
 };
