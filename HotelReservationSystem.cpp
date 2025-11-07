@@ -332,13 +332,14 @@ void HotelReservationSystem::CreateReservationMenu(void)
 		++i;
 	}
 
-	string guestName{ };
-	cout << "Enter guest name: ";
-	getline(cin, guestName);
-
 	DisplayReservationOptions(&options);
 	string roomType{ UserSelectRoomType(&options) };
 	bool selectionValid{ };
+
+	string guestName{ };
+	cout << "Enter guest name: ";
+	getline(cin, guestName);
+	MainMenuOrQuit(guestName);
 
 	while (!selectionValid) {
 		if (_numReserved.at(roomType) < ROOM_TYPES->at(roomType).at("NumRooms")) {
@@ -352,6 +353,7 @@ void HotelReservationSystem::CreateReservationMenu(void)
 			this_thread::sleep_for(chrono::seconds(2));
 			DeleteLines(3);
 			roomType = UserSelectRoomType(&options);
+			MainMenuOrQuit(roomType);
 		}
 	}
 
@@ -569,5 +571,16 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 	// if one does, load all the data to a variable that is local to this function
 	// display all the data from the file
 
+	return;
+}
+
+void HotelReservationSystem::MainMenuOrQuit(string userInput)
+{
+	if (ToLower(userInput) == "m") {
+		MainMenu();
+	}
+	else if (ToLower(userInput) == "q") {
+		exit(0);
+	}
 	return;
 }
