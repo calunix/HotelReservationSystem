@@ -523,6 +523,9 @@ void HotelReservationSystem::ReadReservationFile(string filename)
 	_reservations.clear();
 
 	for (const string line : lines) {
+		if (line == lines.at(0)) {
+			continue;
+		}
 		SplitString(line, delimiter, tokens);
 		roomNumber = stoi(tokens.at(0));
 		rate = stoi(tokens.at(1));
