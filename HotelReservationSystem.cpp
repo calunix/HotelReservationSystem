@@ -36,9 +36,9 @@ HotelReservationSystem::HotelReservationSystem()
 			_availableRooms[rt.first].insert(i);
 		}
 	}
-	time_point now{ system_clock::now() };
-	sys_days currDays = floor<days>(now);
-	_dateToday = currDays;
+	time_point now{ current_zone()->to_local(system_clock::now()) };
+	time_point currDays = floor<days>(now);
+	_dateToday = year_month_day(currDays);
 }
 
 void HotelReservationSystem::ChangeDateLoaded(void)
