@@ -56,6 +56,7 @@ private:
 	static void SplitString(const std::string&, char, std::vector<std::string>&);
 	static void DeleteLines(int=1);
 
+
 	void ChangeDateLoaded(void);
 	void DisplayStartScreen(void);
 	void MainMenu(void);
@@ -71,6 +72,11 @@ private:
 	
 	void UpdateNumReserved(void);
 	void DisplayDetailedReport(void);
+
+	/*
+	* Input prompting
+	*/
+	bool PromptLoadAndOverwrite(void);
 
 	/*
 	* Menus and navigation
