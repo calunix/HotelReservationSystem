@@ -46,7 +46,7 @@ void HotelReservationSystem::ChangeDateLoaded(void)
 	DeleteLines(2);
 	_dateLoaded = UserInputDate();
 
-	// FIXME: logic to repopulate _reservations and _numReserved
+	// FIXME: logic to repopulate _reservations, _roomsAvailable, and _numReserved 
 
 	MainMenu();
 }
@@ -109,32 +109,14 @@ void HotelReservationSystem::DisplayStartScreen(void)
 	string reservationFilename{ ".\\" + _reservationsDirName +
 		"\\" + format("{:%Y-%m-%d}", _dateInput) + ".csv" };
 
-	if (exists(reservationFilename)) {
-		cout << "Reservations for "
-			<< format("{:%m/%d/%Y}", _dateInput)
-			<< " found\n";
-		cout << "Would you like to load them? (y/n): ";
-		string loadConfirmation{ };
-		while (getline(cin, loadConfirmation)) {
-			loadConfirmation = ToLower(loadConfirmation);
-			if (loadConfirmation == "y" || loadConfirmation == "yes") {
-				
-				ReadReservationFile(reservationFilename);
-				UpdateNumReserved();
-				break;
-			}
-			else if (loadConfirmation == "n" || loadConfirmation == "no") {
-				return;
-			}
-			else {
-				DeleteLines(3);
-				cout << "Reservations for "
-					<< format("{:%m/%d/%Y}", _dateInput)
-					<< " found\n";
-				cout << "Would you like to load them? (y/n): ";
-			}
-		}
-	}	
+	bool overwrite{ };
+	if (exists(reservationFilename) && _dateInput == _dateToday) {
+		overwrite = PromptLoadAndOverwrite();
+	}
+	if (overwrite || (exists(reservationFilename) && (_dateInput != _dateToday))) {
+		ReadReservationFile(reservationFilename);
+		UpdateNumReserved();
+	}
 	MainMenu();
 }
 
@@ -291,7 +273,8 @@ void HotelReservationSystem::DisplayInventory(void)
 		cout << left << setw(20) << room.first
 			<< right << setw(10) << room.second.at("Rate")
 			<< right << setw(15) << room.second.at("NumRooms")
-			<< right << setw(20) << room.second.at("NumRooms") - _numReserved.at(room.first) << "\n";
+			<< right << setw(20) << room.second.at("NumRooms")
+			- _numReserved.at(room.first) << "\n";
 	}
 	cout << "\n";
 	PrintSeparator();
@@ -586,4 +569,35 @@ void HotelReservationSystem::MainMenuOrQuit(string userInput)
 		exit(0);
 	}
 	return;
+}
+
+// Returns true if user wants to load and overwrite existing reservations file,
+// false if not.
+bool HotelReservationSystem::PromptLoadAndOverwrite(void)
+{
+	string prompt{ "!! WARNING !!\n"
+		"Existing reservations for " + format("{:%m/%d/%Y}", _dateLoaded) +
+		" found\n"
+		"Answering no will cause existing reservations to be OVERWRITTEN\n"
+		"Would you like to load them? (y/n): "
+	};
+	
+	cout << prompt;
+	string loadConfirmation{ };
+	while (getline(cin, loadConfirmation)) {
+		loadConfirmation = ToLower(loadConfirmation);
+		if (loadConfirmation == "y" || loadConfirmation == "yes") {
+			return true;
+		}
+		else if (loadConfirmation == "n" || loadConfirmation == "no") {
+			return false;
+		}
+		else if (ToLower(loadConfirmation) == "q") {
+			exit(0);
+		}
+		else {
+			DeleteLines(5);
+			cout << prompt;
+		}
+	}
 }
