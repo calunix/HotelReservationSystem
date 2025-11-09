@@ -2,7 +2,6 @@
 
 #include "Registrar.hpp"
 
-#include <iostream>
 #include <string>
 
 /*

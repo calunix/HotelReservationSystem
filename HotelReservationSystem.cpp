@@ -231,7 +231,9 @@ void HotelReservationSystem::PrintCenteredOnLongest(const std::string strs[], si
 	}
 }
 
-void HotelReservationSystem::PrintCenteredOnLongest(const vector<string>* tokens) {
+void HotelReservationSystem::PrintCenteredOnLongest
+    (const vector<string>* tokens)
+{
 	size_t maxLength{ };
 	for (string token : *tokens) {
 		if (token.length() > maxLength) {
@@ -646,8 +648,15 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 
 	PrintCenteredOnLongest(&formattedOutput);
 	cout << "\n";
-	PrintSeparator();
-	system("pause");
+	PrintSeparator();	
+	string userInput{ };
+	cout << "Enter m for main menu or q to quit: ";
+	ShowConsoleCursor();
+	while (getline(cin, userInput)) {
+		MainMenuOrQuit(userInput);
+		DeleteLines(2);
+		cout << "Enter m for main menu or q to quit: ";
+	}
 	ShowConsoleCursor();
 	MainMenu();
 }
