@@ -130,10 +130,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HotelReservationSystem.h" />
-    <ClInclude Include="HotelRoom.h" />
     <ClInclude Include="HotelRoom.hpp" />
     <ClInclude Include="Registrar.hpp" />
-    <ClInclude Include="Reservation.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

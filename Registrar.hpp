@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HotelRoom.h"
+#include "HotelRoom.hpp"
 
 #include <string>
 #include <unordered_map>

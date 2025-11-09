@@ -29,13 +29,7 @@
     <ClInclude Include="HotelRoom.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HotelRoom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Registrar.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Reservation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
