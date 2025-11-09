@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HotelRoom.h"
+#include "HotelRoom.hpp"
 
 #include <unordered_map>
 #include <string>
@@ -41,57 +41,50 @@ private:
 	std::chrono::year_month_day _dateToday{ };
 	std::chrono::year_month_day _dateLoaded{ };
 
-	// can I break all or most of these into a graphics header
-	// do the prompts need to be funtions or can they just be cout calls to const strings defined in the header
+	/*
+	* Utility functions
+	*/
 	static std::string ToLower(const std::string&);
-	// rename PromptForInput to MainMenuPromptForInput
-	static void PromptForInput(void);
 	static void PrintCentered(std::string);
 	static void PrintCenteredOnLongest(const std::string[], size_t);
 	static void PrintCenteredOnLongest(const std::vector<std::string>*);
 	static void PrintSeparator(void);
 	static void HideConsoleCursor(void);
 	static void ShowConsoleCursor(void);
-	static void LoadingIndicator(int, int=750);
+	static void LoadingIndicator(int, int = 750);
 	static void SplitString(const std::string&, char, std::vector<std::string>&);
-	static void DeleteLines(int=1);
-
-
-	void ChangeDateLoaded(void);
-	void DisplayStartScreen(void);
-	void MainMenu(void);
-	void DisplayApplicationTitle(void);
-	void DisplayInventory(void);
-	void DisplayCommandOptions(void);
-	void CreateReservationMenu(void);
-	void DisplayRevenue(void);
-	std::chrono::year_month_day UserInputDate(void);
-	void DisplayReservationOptions(std::map<std::string, std::string>*);
-	std::string UserSelectRoomType(std::map<std::string, std::string>*);
-	void DisplayDatePane(void);
-	
-	void UpdateNumReserved(void);
-	void DisplayDetailedReport(void);
+	static void DeleteLines(int = 1);
 	
 	/*
 	* Data management
 	*/
 	void UpdateRoomsAvailable(void);
+	void UpdateNumReserved(void);
+	void ReadReservationFile(std::string);
+	void WriteReservationFile(std::string);
 
 	/*
 	* Input prompting
 	*/
+	// rename PromptForInput to MainMenuPromptForInput
+	static void PromptForInput(void);
 	bool PromptLoadAndOverwrite(void);
+	std::chrono::year_month_day UserInputDate(void);
+	std::string UserSelectRoomType(std::map<std::string, std::string>*);
 
 	/*
-	* Menus and navigation
+	* Displays, menus, and navigation
 	*/
+	void ChangeDateLoaded(void);
+	void CreateReservationMenu(void);
+	void DisplayApplicationTitle(void);
+	void DisplayCommandOptions(void);
+	void DisplayDatePane(void);
+	void DisplayDetailedReport(void);
+	void DisplayInventory(void);
+	void DisplayReservationOptions(std::map<std::string, std::string>*);
+	void DisplayRevenue(void);
+	void DisplayStartScreen(void);
+	void MainMenu(void);
 	void MainMenuOrQuit(std::string);
-
-
-	/*
-	* File read/write
-	*/
-	void ReadReservationFile(std::string);
-	void WriteReservationFile(std::string);
 };
