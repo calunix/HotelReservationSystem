@@ -121,7 +121,6 @@ void HotelReservationSystem::DisplayStartScreen(void)
 		load = PromptLoadAndOverwrite();
 	}
 	if (load || (exists(reservationFilename) && (_dateInput != _dateToday))) {
-		//if (overwrite) remove();
 		ReadReservationFile(reservationFilename, _reservations);
 		UpdateNumReserved();
 		UpdateRoomsAvailable();
@@ -576,7 +575,6 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 			<< format("{:%m/%d/%Y}", reportDate) + "\n";
 		system("pause");
 		DeleteLines(3);
-		// probably need to delete some lines here
 		return;
 	}
 
@@ -589,19 +587,30 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 	vector<string> formattedOutput{ };
 	stringstream ss{ };
 
+	// get longest name and room type to dynamically set width
+	int maxName{ }, maxRoomType{ };
+	for (const auto& res : reservations) {
+		if (res->name.size() > maxName) {
+			maxName = res->name.size();
+		}
+		if (res->roomType.size() > maxRoomType) {
+		    maxRoomType = res->roomType.size();
+		}
+	}
+
 	cout << "\n";
 	PrintCentered("Detailed Reservations Report: " + format("{:%m/%d/%Y}", reportDate));
 	cout << "\n";
-	ss << left << setw(25) << "Name"
-		<< left << setw(20) << "Room Type"
-		<< right << setw(10) << "Rate ($)"
-		<< right << setw(10) << "Room No.";
+	ss << left << setw(maxName + 2) << "Name"
+		<< left << setw(maxRoomType + 2) << "Room Type"
+		<< right << setw(10) << "Room No."
+		<< right << setw(10) << "Rate ($)";
 	formattedOutput.push_back(ss.str());
 	ss.str("");
 	ss.clear();
 
-	ss << left << setw(25) << "----"
-		<< left << setw(20) << "---------"
+	ss << left << setw(maxName + 2) << "----"
+		<< left << setw(maxRoomType + 2) << "---------"
 		<< right << setw(10) << "--------"
 		<< right << setw(10) << "--------";
 	formattedOutput.push_back(ss.str());
@@ -609,8 +618,8 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 	ss.clear();
 
 	for (const auto& res : reservations) {
-		ss << left << setw(25) << res->name
-			<< left << setw(20) << res->roomType			
+		ss << left << setw(maxName + 2) << res->name
+			<< left << setw(maxRoomType + 2) << res->roomType
 			<< right << setw(10) << res->roomNumber
 			<< right << setw(10) << res->rate;
 		formattedOutput.push_back(ss.str());
@@ -620,6 +629,7 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 
 	PrintCenteredOnLongest(&formattedOutput);
 	cout << "\n";
+	PrintSeparator();
 	system("pause");
 	ShowConsoleCursor();
 	MainMenu();
