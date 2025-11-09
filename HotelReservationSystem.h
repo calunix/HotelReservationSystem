@@ -72,6 +72,11 @@ private:
 	
 	void UpdateNumReserved(void);
 	void DisplayDetailedReport(void);
+	
+	/*
+	* Data management
+	*/
+	void UpdateRoomsAvailable(void);
 
 	/*
 	* Input prompting
