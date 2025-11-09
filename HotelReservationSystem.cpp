@@ -265,28 +265,45 @@ void HotelReservationSystem::DisplayApplicationTitle(void)
 
 void HotelReservationSystem::DisplayInventory(void)
 {
+	
+
+	stringstream ss{ };
+	vector<string> formattedData{ };
+	
 	PrintSeparator();
 	cout << "\n";
 	PrintCentered(">> Reservations Summary - " + 
 		format("{:%m/%d/%Y}", _dateLoaded) + " <<" );
 	PrintCentered("---------------------------------------");
 	cout << "\n";
-	cout << left << setw(20) << "Room Type"
+
+	ss << left << setw(20) << "Room Type"
 		<< right << setw(10) << "Rate ($)"
 		<< right << setw(15) << "Total Rooms"
-		<< right << setw(20) << "Available Rooms" << "\n";
-	cout << left << setw(20) << "---------"
+		<< right << setw(20) << "Available Rooms";
+	formattedData.push_back(ss.str());
+	ss.str("");
+	ss.clear();
+
+	ss << left << setw(20) << "---------"
 		<< right << setw(10) << "--------"
 		<< right << setw(15) << "-----------"
-		<< right << setw(20) << "---------------" << "\n";
+		<< right << setw(20) << "---------------";
+	formattedData.push_back(ss.str());
+	ss.str("");
+	ss.clear();
 
 	for (const auto& room : *ROOM_TYPES) {
-		cout << left << setw(20) << room.first
+		ss << left << setw(20) << room.first
 			<< right << setw(10) << room.second.at("Rate")
 			<< right << setw(15) << room.second.at("NumRooms")
 			<< right << setw(20) << room.second.at("NumRooms")
-			- _numReserved.at(room.first) << "\n";
+			- _numReserved.at(room.first);
+		formattedData.push_back(ss.str());
+		ss.str("");
+		ss.clear();
 	}
+	PrintCenteredOnLongest(&formattedData);
 	cout << "\n";
 	PrintSeparator();
 }
