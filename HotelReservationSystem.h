@@ -10,8 +10,6 @@
 #include <memory>
 #include <set>
 
-#include "Windows.h"
-
 struct Reservation
 {
 	int roomNumber;
@@ -52,7 +50,8 @@ private:
 	static void HideConsoleCursor(void);
 	static void ShowConsoleCursor(void);
 	static void LoadingIndicator(int, int = 750);
-	static void SplitString(const std::string&, char, std::vector<std::string>&);
+	static void SplitString
+	    (const std::string&, char, std::vector<std::string>&);
 	static void DeleteLines(int = 1);
 	
 	/*
@@ -60,7 +59,8 @@ private:
 	*/
 	void UpdateRoomsAvailable(void);
 	void UpdateNumReserved(void);
-	void ReadReservationFile(std::string);
+	void ReadReservationFile
+	    (std::string, std::vector<std::unique_ptr<Reservation>>&);
 	void WriteReservationFile(std::string);
 
 	/*

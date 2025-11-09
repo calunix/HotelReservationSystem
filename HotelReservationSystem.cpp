@@ -14,7 +14,9 @@
 #include <format>
 #include <memory>
 #include <random>
+#include <limits>
 
+#define NOMINMAX
 #include "Windows.h"
 
 using namespace std;
@@ -49,7 +51,7 @@ void HotelReservationSystem::ChangeDateLoaded(void)
 	string reservationFilename{ ".\\" + _reservationsDirName +
 		"\\" + format("{:%Y-%m-%d}", _dateLoaded) + ".csv" };
 	if (exists(reservationFilename)) {
-		ReadReservationFile(reservationFilename);
+		ReadReservationFile(reservationFilename, _reservations);
 	}
 	UpdateNumReserved();
 	UpdateRoomsAvailable();
@@ -119,7 +121,7 @@ void HotelReservationSystem::DisplayStartScreen(void)
 		overwrite = PromptLoadAndOverwrite();
 	}
 	if (overwrite || (exists(reservationFilename) && (_dateInput != _dateToday))) {
-		ReadReservationFile(reservationFilename);
+		ReadReservationFile(reservationFilename, _reservations);
 		UpdateNumReserved();
 		UpdateRoomsAvailable();
 	}
@@ -484,7 +486,8 @@ void HotelReservationSystem::DeleteLines(int numToDelete)
 	}
 }
 
-void HotelReservationSystem::ReadReservationFile(string filename)
+void HotelReservationSystem::ReadReservationFile
+   (string filename, vector<unique_ptr<Reservation>>& reservations)
 {
 	ifstream reservationFile(filename);
 	if (!reservationFile.is_open()) {
@@ -509,7 +512,7 @@ void HotelReservationSystem::ReadReservationFile(string filename)
 	char delimiter{ ',' };
 	unique_ptr<Reservation> reservation{ };
 	vector<string> tokens{ };
-	_reservations.clear();
+	reservations.clear();
 
 	for (const string line : lines) {
 		if (line == lines.at(0)) {
@@ -521,7 +524,7 @@ void HotelReservationSystem::ReadReservationFile(string filename)
 		name = tokens.at(2);
 		roomType = tokens.at(3);
 
-		_reservations.push_back(make_unique<Reservation>
+		reservations.push_back(make_unique<Reservation>
 			(roomNumber, rate, name, roomType));
 		tokens.clear();
 	}
@@ -556,14 +559,66 @@ void HotelReservationSystem::UpdateNumReserved(void)
 	}
 }
 
+// Gets a date from the user, determines if reservations exist on that date,
+// and if so, formats the data then prints to display.
 void HotelReservationSystem::DisplayDetailedReport(void)
 {
-	// get a date from the user
-	// check if a file exists for that date
-	// if one does, load all the data to a variable that is local to this function
-	// display all the data from the file
+	year_month_day reportDate{ UserInputDate() };
+	DeleteLines(2);
+	string resFile{ ".\\" + _reservationsDirName +
+		"\\" + format("{:%Y-%m-%d}", reportDate) + ".csv" };
+	if (!exists(resFile)) {
+		cout << "No reservations found for "
+			<< format("{:%m/%d/%Y}", reportDate) + "\n";
+		system("pause");
+		DeleteLines(3);
+		// probably need to delete some lines here
+		return;
+	}
 
-	return;
+	HideConsoleCursor();
+	system("cls");
+	DisplayApplicationTitle();
+
+	std::vector<std::unique_ptr<Reservation>> reservations{ };
+	ReadReservationFile(resFile, reservations);
+	vector<string> formattedOutput{ };
+	stringstream ss{ };
+
+	cout << "\n";
+	PrintCentered("Detailed Reservations Report: " + format("{:%m/%d/%Y}", reportDate));
+	cout << "\n";
+	ss << left << setw(25) << "Name"
+		<< left << setw(20) << "Room Type"
+		<< right << setw(10) << "Rate ($)"
+		<< right << setw(10) << "Room No.";
+	formattedOutput.push_back(ss.str());
+	ss.str("");
+	ss.clear();
+
+	ss << left << setw(25) << "----"
+		<< left << setw(20) << "---------"
+		<< right << setw(10) << "--------"
+		<< right << setw(10) << "--------";
+	formattedOutput.push_back(ss.str());
+	ss.str("");
+	ss.clear();
+
+	for (const auto& res : reservations) {
+		ss << left << setw(25) << res->name
+			<< left << setw(20) << res->roomType			
+			<< right << setw(10) << res->roomNumber
+			<< right << setw(10) << res->rate;
+		formattedOutput.push_back(ss.str());
+		ss.str("");
+		ss.clear();
+	}
+
+	PrintCenteredOnLongest(&formattedOutput);
+	cout << "\n";
+	system("pause");
+	ShowConsoleCursor();
+	MainMenu();
 }
 
 void HotelReservationSystem::MainMenuOrQuit(string userInput)
