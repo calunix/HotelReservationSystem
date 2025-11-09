@@ -41,13 +41,18 @@ HotelReservationSystem::HotelReservationSystem()
 	_dateToday = year_month_day(currDays);
 }
 
-void HotelReservationSystem::ChangeDateLoaded(void)
+void HotelReservationSystem::ChangeDateLoaded(void)  
 {
 	DeleteLines(2);
-	_dateLoaded = UserInputDate();
-
-	// FIXME: logic to repopulate _reservations, _roomsAvailable, and _numReserved 
-
+	_dateLoaded = UserInputDate(); 
+	_reservations.clear();
+	string reservationFilename{ ".\\" + _reservationsDirName +
+		"\\" + format("{:%Y-%m-%d}", _dateLoaded) + ".csv" };
+	if (exists(reservationFilename)) {
+		ReadReservationFile(reservationFilename);
+	}
+	UpdateNumReserved();
+	UpdateRoomsAvailable();
 	MainMenu();
 }
 
@@ -116,6 +121,7 @@ void HotelReservationSystem::DisplayStartScreen(void)
 	if (overwrite || (exists(reservationFilename) && (_dateInput != _dateToday))) {
 		ReadReservationFile(reservationFilename);
 		UpdateNumReserved();
+		UpdateRoomsAvailable();
 	}
 	MainMenu();
 }
@@ -571,8 +577,9 @@ void HotelReservationSystem::MainMenuOrQuit(string userInput)
 	return;
 }
 
-// Returns true if user wants to load and overwrite existing reservations file,
-// false if not.
+// Prompts the user asking if they want to load an existing reservations file
+// found after inputting a date at program start. Returns true if user wants 
+// to load and overwrite existing reservations file, false if not.
 bool HotelReservationSystem::PromptLoadAndOverwrite(void)
 {
 	string prompt{ "!! WARNING !!\n"
@@ -599,5 +606,22 @@ bool HotelReservationSystem::PromptLoadAndOverwrite(void)
 			DeleteLines(5);
 			cout << prompt;
 		}
+	}
+}
+
+void HotelReservationSystem::UpdateRoomsAvailable(void)
+{
+	int firstRoomNum{ };
+	int numRooms{ };
+	for (const auto& rt : *ROOM_TYPES) {
+		_availableRooms[rt.first] = { };
+		firstRoomNum = rt.second.at("FirstRoomNum");
+		numRooms = rt.second.at("NumRooms");
+		for (int i{ firstRoomNum }; i < firstRoomNum + numRooms; ++i) {
+			_availableRooms[rt.first].insert(i);
+		}
+	}
+	for (const auto& res : _reservations) {
+		_availableRooms[res->roomType].erase(res->roomNumber);
 	}
 }
