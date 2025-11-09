@@ -116,14 +116,18 @@ void HotelReservationSystem::DisplayStartScreen(void)
 	string reservationFilename{ ".\\" + _reservationsDirName +
 		"\\" + format("{:%Y-%m-%d}", _dateInput) + ".csv" };
 
-	bool overwrite{ };
+	bool load{ };
 	if (exists(reservationFilename) && _dateInput == _dateToday) {
-		overwrite = PromptLoadAndOverwrite();
+		load = PromptLoadAndOverwrite();
 	}
-	if (overwrite || (exists(reservationFilename) && (_dateInput != _dateToday))) {
+	if (load || (exists(reservationFilename) && (_dateInput != _dateToday))) {
+		//if (overwrite) remove();
 		ReadReservationFile(reservationFilename, _reservations);
 		UpdateNumReserved();
 		UpdateRoomsAvailable();
+	}
+	else if (!load) {
+		remove(reservationFilename);
 	}
 	MainMenu();
 }
