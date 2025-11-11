@@ -24,13 +24,13 @@ public:
 	HotelReservationSystem();
 	void Start(void);
 private:
-	const static unsigned short DISPLAY_WIDTH{ 80 };
+	const static unsigned short DISPLAY_WIDTH{ 81 };
 	const static char SEPARATOR_CHAR{ '=' };
 	const size_t NUM_ROOM_TYPES{ Registry::GetRegistry()->size() };
 
 	const std::unordered_map<std::string, std::unordered_map
 		<std::string, int>>* ROOM_TYPES{ Registry::GetRegistry() };
-	const std::string _reservationsDirName{ "reservations" };
+	const std::string RESERVATIONS_DIR_NAME{ "reservations" };
 
 	std::vector<std::unique_ptr<Reservation>> _reservations{ };
 	std::unordered_map<std::string, int> _numReserved{ };
@@ -57,6 +57,7 @@ private:
 	/*
 	* Data management
 	*/
+	int ComputeDayLoadedRevenue(void);
 	void UpdateRoomsAvailable(void);
 	void UpdateNumReserved(void);
 	void ReadReservationFile
@@ -83,7 +84,6 @@ private:
 	void DisplayDetailedReport(void);
 	void DisplayInventory(void);
 	void DisplayReservationOptions(std::map<std::string, std::string>*);
-	void DisplayRevenue(void);
 	void DisplayStartScreen(void);
 	void MainMenu(void);
 	void MainMenuOrQuit(std::string);

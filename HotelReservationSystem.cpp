@@ -48,7 +48,7 @@ void HotelReservationSystem::ChangeDateLoaded(void)
 	DeleteLines(2);
 	_dateLoaded = UserInputDate(); 
 	_reservations.clear();
-	string reservationFilename{ ".\\" + _reservationsDirName +
+	string reservationFilename{ ".\\" + RESERVATIONS_DIR_NAME +
 		"\\" + format("{:%Y-%m-%d}", _dateLoaded) + ".csv" };
 	if (exists(reservationFilename)) {
 		ReadReservationFile(reservationFilename, _reservations);
@@ -63,7 +63,7 @@ void HotelReservationSystem::Start(void)
 	system("cls");
 
 	//check if reservations directory exists, if not make it
-	path reservationsDir{ _reservationsDirName };
+	path reservationsDir{ RESERVATIONS_DIR_NAME };
 	if (!is_directory(reservationsDir)) {
 		create_directory(reservationsDir);
 	}
@@ -113,7 +113,7 @@ void HotelReservationSystem::DisplayStartScreen(void)
 
 	year_month_day _dateInput{ UserInputDate() };
 	_dateLoaded = _dateInput;
-	string reservationFilename{ ".\\" + _reservationsDirName +
+	string reservationFilename{ ".\\" + RESERVATIONS_DIR_NAME +
 		"\\" + format("{:%Y-%m-%d}", _dateInput) + ".csv" };
 
 	bool load{ };
@@ -155,9 +155,6 @@ void HotelReservationSystem::MainMenu(void)
 			ChangeDateLoaded();
 		}
 		else if (userInput == "3") {
-			DisplayRevenue();
-		}
-		else if (userInput == "4") {
 			DisplayDetailedReport();
 		}
 		else {
@@ -267,8 +264,6 @@ void HotelReservationSystem::DisplayApplicationTitle(void)
 
 void HotelReservationSystem::DisplayInventory(void)
 {
-	
-
 	stringstream ss{ };
 	vector<string> formattedData{ };
 	
@@ -305,6 +300,14 @@ void HotelReservationSystem::DisplayInventory(void)
 		ss.str("");
 		ss.clear();
 	}
+
+	int revenue{ ComputeDayLoadedRevenue() };
+	ss << right << setw(65)
+		<< ("Total Revenue: $" + to_string(revenue));
+	formattedData.push_back("");
+	formattedData.push_back(ss.str());
+	cout << "\n";
+
 	PrintCenteredOnLongest(&formattedData);
 	cout << "\n";
 	PrintSeparator();
@@ -319,8 +322,7 @@ void HotelReservationSystem::DisplayCommandOptions(void)
 	string options[]{
 		"1 - Create Reservation",
 		"2 - Change Date Loaded",
-		"3 - Compute Revenue for Date Loaded",
-		"4 - Detailed Reservations Report by Date",
+		"3 - Detailed Reservations Report by Date",
 		"Q - Quit" };
 	PrintCenteredOnLongest(options, sizeof(options) / sizeof(string));
 	cout << "\n";
@@ -384,7 +386,7 @@ void HotelReservationSystem::CreateReservationMenu(void)
 
 	// separately write the reservation to file
 	// all reservations must be immediately committed to file
-	WriteReservationFile(".\\" + _reservationsDirName +
+	WriteReservationFile(".\\" + RESERVATIONS_DIR_NAME +
 		"\\" + format("{:%Y-%m-%d}", _dateToday) + ".csv");
 
 	cout << "Reservation created\n";
@@ -392,18 +394,13 @@ void HotelReservationSystem::CreateReservationMenu(void)
 	MainMenu();
 }
 
-void HotelReservationSystem::DisplayRevenue(void)
+int HotelReservationSystem::ComputeDayLoadedRevenue(void)
 {
 	int revenue{ };
-	HideConsoleCursor();
 	for (const auto& room : *ROOM_TYPES) {
 		revenue += _numReserved.at(room.first) * room.second.at("Rate");
 	}
-	locale current_locale("");
-	cout.imbue(current_locale);
-	cout << "Total revenue: $" << revenue;
-	this_thread::sleep_for(chrono::seconds(5));
-	ShowConsoleCursor();
+	return revenue;
 }
 
 // Returns a std::chrono::year_month_day object. Validates the date provided 
@@ -587,7 +584,7 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 {
 	year_month_day reportDate{ UserInputDate() };
 	DeleteLines(2);
-	string resFile{ ".\\" + _reservationsDirName +
+	string resFile{ ".\\" + RESERVATIONS_DIR_NAME +
 		"\\" + format("{:%Y-%m-%d}", reportDate) + ".csv" };
 	if (!exists(resFile)) {
 		cout << "No reservations found for "
@@ -636,6 +633,10 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 	ss.str("");
 	ss.clear();
 
+	locale current_locale("");
+	ss.imbue(current_locale);
+
+	int revenue{ };
 	for (const auto& res : reservations) {
 		ss << left << setw(maxName + 2) << res->name
 			<< left << setw(maxRoomType + 2) << res->roomType
@@ -644,9 +645,15 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 		formattedOutput.push_back(ss.str());
 		ss.str("");
 		ss.clear();
-	}
 
-	PrintCenteredOnLongest(&formattedOutput);
+		revenue += res->rate;
+	}
+	ss << right << setw(maxName + maxRoomType + 24)
+		<< ("Total Revenue: $" +  to_string(revenue));
+	formattedOutput.push_back("");
+	formattedOutput.push_back(ss.str());
+
+	PrintCenteredOnLongest(&formattedOutput);	
 	cout << "\n";
 	PrintSeparator();	
 	string userInput{ };
