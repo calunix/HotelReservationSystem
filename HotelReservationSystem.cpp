@@ -149,7 +149,15 @@ void HotelReservationSystem::MainMenu(void)
 			exit(0);
 		}
 		else if (userInput == "1") {
-			CreateReservationMenu();
+			if (_dateLoaded == _dateToday) {
+				CreateReservationMenu();
+			}
+			else {
+				cout << "Reservations can only be made for today. "
+					"Please change Date Loaded to today's date.\n";
+				this_thread::sleep_for(seconds(5));
+				DeleteLines(2);
+			}
 		}
 		else if (userInput == "2") {
 			ChangeDateLoaded();
