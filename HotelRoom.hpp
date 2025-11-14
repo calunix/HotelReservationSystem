@@ -17,14 +17,14 @@ template <class RoomType>
 class HotelRoom
 {
 protected:
-	inline static unsigned short _rate{ };
-	inline static unsigned short _firstRoomNum{ };
-	inline static unsigned short _numRooms{ };
+	inline static int _rate{ };
+	inline static int _firstRoomNum{ };
+	inline static int _numRooms{ };
 public:
 	HotelRoom() = default;
-	static unsigned short Rate() { return RoomType::_rate; }
-	static unsigned short FirstRoomNum() { return RoomType::_firstRoomNum; }
-	static unsigned short NumRooms() { return RoomType::_numRooms; }
+	static int Rate() { return RoomType::_rate; }
+	static int FirstRoomNum() { return RoomType::_firstRoomNum; }
+	static int NumRooms() { return RoomType::_numRooms; }
 };
 
 class CourtyardRoom : public HotelRoom<CourtyardRoom>
