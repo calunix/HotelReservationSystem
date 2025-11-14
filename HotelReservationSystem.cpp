@@ -282,35 +282,52 @@ void HotelReservationSystem::DisplayInventory(void)
 	PrintCentered("---------------------------------------");
 	cout << "\n";
 
-	ss << left << setw(20) << "Room Type"
-		<< right << setw(10) << "Rate ($)"
-		<< right << setw(15) << "Total Rooms"
-		<< right << setw(20) << "Available Rooms";
+	int roomTypeMaxLength{ };
+	for (const auto& room : *ROOM_TYPES) {
+		if (room.first.size() > roomTypeMaxLength) {
+			roomTypeMaxLength = room.first.size();
+		}
+	}
+	roomTypeMaxLength += 1;
+
+	const int rateWidth{ 10 };
+	const int totalRoomsWidth{ 12 };
+	const int availableWidth{ 10 };
+	const int reservedWidth{ 9 };
+
+	ss << left << setw(roomTypeMaxLength) << "Room Type"
+		<< right << setw(rateWidth) << "Rate ($)"
+		<< right << setw(totalRoomsWidth) << "Total Rooms"
+		<< right << setw(availableWidth) << "Available"
+		<< right << setw(reservedWidth) << "Reserved";
 	formattedData.push_back(ss.str());
 	ss.str("");
 	ss.clear();
 
-	ss << left << setw(20) << "---------"
-		<< right << setw(10) << "--------"
-		<< right << setw(15) << "-----------"
-		<< right << setw(20) << "---------------";
+	ss << left << setw(roomTypeMaxLength) << "---------"
+		<< right << setw(rateWidth) << "--------"
+		<< right << setw(totalRoomsWidth) << "-----------"
+		<< right << setw(availableWidth) << "---------"
+		<< right << setw(reservedWidth) << "--------";
 	formattedData.push_back(ss.str());
 	ss.str("");
 	ss.clear();
 
 	for (const auto& room : *ROOM_TYPES) {
-		ss << left << setw(20) << room.first
-			<< right << setw(10) << room.second.at("Rate")
-			<< right << setw(15) << room.second.at("NumRooms")
-			<< right << setw(20) << room.second.at("NumRooms")
-			- _numReserved.at(room.first);
+		ss << left << setw(roomTypeMaxLength) << room.first
+			<< right << setw(rateWidth) << room.second.at("Rate")
+			<< right << setw(totalRoomsWidth) << room.second.at("NumRooms")
+			<< right << setw(availableWidth) << room.second.at("NumRooms")
+			    - _numReserved.at(room.first)
+			<< right << setw(reservedWidth) << _numReserved.at(room.first);
 		formattedData.push_back(ss.str());
 		ss.str("");
 		ss.clear();
 	}
-
+	const int totalWidth{ roomTypeMaxLength + rateWidth + totalRoomsWidth
+	    + availableWidth + reservedWidth };
 	int revenue{ ComputeDayLoadedRevenue() };
-	ss << right << setw(65)
+	ss << right << setw(totalWidth)
 		<< ("Total Revenue: $" + to_string(revenue));
 	formattedData.push_back("");
 	formattedData.push_back(ss.str());
@@ -329,7 +346,7 @@ void HotelReservationSystem::DisplayCommandOptions(void)
 	PrintCentered("---------------");
 	string options[]{
 		"1 - Create Reservation",
-		"2 - Change Date Loaded",
+		"2 - Change Reservations Summary Date (Date Loaded)",
 		"3 - Detailed Reservations Report by Date",
 		"Q - Quit" };
 	PrintCenteredOnLongest(options, sizeof(options) / sizeof(string));
@@ -359,11 +376,6 @@ void HotelReservationSystem::CreateReservationMenu(void)
 	string roomType{ UserSelectRoomType(&options) };
 	bool selectionValid{ };
 
-	string guestName{ };
-	cout << "Enter guest name: ";
-	getline(cin, guestName);
-	MainMenuOrQuit(guestName);
-
 	while (!selectionValid) {
 		if (_numReserved.at(roomType) < ROOM_TYPES->at(roomType).at("NumRooms")) {
 			_numReserved[roomType] += 1;
@@ -379,6 +391,11 @@ void HotelReservationSystem::CreateReservationMenu(void)
 			MainMenuOrQuit(roomType);
 		}
 	}
+
+	string guestName{ };
+	cout << "Enter guest name: ";
+	getline(cin, guestName);
+	MainMenuOrQuit(guestName);
 
 	// pick a random room number
 	vector<int> roomNums{ _availableRooms.at(roomType).begin(),
@@ -397,8 +414,12 @@ void HotelReservationSystem::CreateReservationMenu(void)
 	WriteReservationFile(".\\" + RESERVATIONS_DIR_NAME +
 		"\\" + format("{:%Y-%m-%d}", _dateToday) + ".csv");
 
-	cout << "Reservation created\n";
-	this_thread::sleep_for(seconds(4));
+	cout << "\nReservation created...\n\n"
+		<< "Name: " << guestName << "\n"
+		<< "Room Type: " << roomType << "\n"
+		<< "Room No.: " << roomNum << "\n\n";
+
+	system("pause");
 	MainMenu();
 }
 
@@ -618,25 +639,29 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 			maxName = res->name.size();
 		}
 		if (res->roomType.size() > maxRoomType) {
-		    maxRoomType = res->roomType.size();
+			maxRoomType = res->roomType.size();
 		}
 	}
+	maxName += 1;
+	maxRoomType += 1;
+	int roomNumWidth{ 8 };
+	int rateWidth{ 9 };
 
 	cout << "\n";
 	PrintCentered("Detailed Reservations Report: " + format("{:%m/%d/%Y}", reportDate));
 	cout << "\n";
-	ss << left << setw(maxName + 2) << "Name"
-		<< left << setw(maxRoomType + 2) << "Room Type"
-		<< right << setw(10) << "Room No."
-		<< right << setw(10) << "Rate ($)";
+	ss << left << setw(maxName) << "Name"
+		<< left << setw(maxRoomType) << "Room Type"
+		<< right << setw(roomNumWidth) << "Room No."
+		<< right << setw(rateWidth) << "Rate ($)";
 	formattedOutput.push_back(ss.str());
 	ss.str("");
 	ss.clear();
 
-	ss << left << setw(maxName + 2) << "----"
-		<< left << setw(maxRoomType + 2) << "---------"
-		<< right << setw(10) << "--------"
-		<< right << setw(10) << "--------";
+	ss << left << setw(maxName) << "----"
+		<< left << setw(maxRoomType) << "---------"
+		<< right << setw(roomNumWidth) << "--------"
+		<< right << setw(rateWidth) << "--------";
 	formattedOutput.push_back(ss.str());
 	ss.str("");
 	ss.clear();
@@ -646,17 +671,18 @@ void HotelReservationSystem::DisplayDetailedReport(void)
 
 	int revenue{ };
 	for (const auto& res : reservations) {
-		ss << left << setw(maxName + 2) << res->name
-			<< left << setw(maxRoomType + 2) << res->roomType
-			<< right << setw(10) << res->roomNumber
-			<< right << setw(10) << res->rate;
+		ss << left << setw(maxName) << res->name
+			<< left << setw(maxRoomType) << res->roomType
+			<< right << setw(roomNumWidth) << res->roomNumber
+			<< right << setw(rateWidth) << res->rate;
 		formattedOutput.push_back(ss.str());
 		ss.str("");
 		ss.clear();
 
 		revenue += res->rate;
 	}
-	ss << right << setw(maxName + maxRoomType + 24)
+	int totalWidth{ maxName + maxRoomType + roomNumWidth + rateWidth };
+	ss << right << setw(totalWidth)
 		<< ("Total Revenue: $" +  to_string(revenue));
 	formattedOutput.push_back("");
 	formattedOutput.push_back(ss.str());
